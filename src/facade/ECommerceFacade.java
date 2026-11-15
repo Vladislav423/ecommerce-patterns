@@ -136,7 +136,7 @@ public class ECommerceFacade {
         CartItem existing = cart.findItem(productId);
         int alreadyInCart = (existing != null) ? existing.getQuantity() : 0;
 
-        if (alreadyInCart + quantity > available) {
+        if (quantity > available - alreadyInCart) {
             System.out.println("Not enough stock for " + product.getName() + ". Available: " + available + ", already in cart: " + alreadyInCart);
             return;
         }

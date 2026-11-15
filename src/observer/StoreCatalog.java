@@ -74,8 +74,8 @@ public class StoreCatalog implements CatalogSubject {
             System.out.println("Product not found: " + productId);
             return;
         }
-        if (!Double.isFinite(newPrice) || newPrice <= 0) {
-            System.out.println("Invalid price: must be greater than 0.");
+        if (!Double.isFinite(newPrice) || newPrice < 0.01 || newPrice > 1_000_000) {
+            System.out.println("Invalid price: must be between $0.01 and $1,000,000.");
             return;
         }
         newPrice = Math.round(newPrice * 100.0) / 100.0;
@@ -94,8 +94,8 @@ public class StoreCatalog implements CatalogSubject {
             System.out.println("Product not found: " + productId);
             return;
         }
-        if (newStock < 0) {
-            System.out.println("Invalid stock: cannot be negative.");
+        if (newStock < 0 || newStock > 10_000) {
+            System.out.println("Invalid stock: must be between 0 and 10,000.");
             return;
         }
         int oldStock = getStock(product.getId());
