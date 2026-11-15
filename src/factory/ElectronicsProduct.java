@@ -11,7 +11,7 @@ public class ElectronicsProduct implements Product {
     public ElectronicsProduct(String id, String name, double basePrice, String brand) {
         this.id = id;
         this.name = name;
-        this.basePrice = basePrice;
+        this.basePrice = Math.max(0, basePrice);
         this.brand = brand;
     }
 
@@ -37,6 +37,8 @@ public class ElectronicsProduct implements Product {
 
     @Override
     public void updateBasePrice(double newPrice) {
-        this.basePrice = newPrice;
+        if (newPrice > 0) {
+            this.basePrice = newPrice;
+        }
     }
 }

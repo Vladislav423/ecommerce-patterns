@@ -45,7 +45,9 @@ public class CustomLaptop implements Product {
 
     @Override
     public void updateBasePrice(double newPrice) {
-        this.basePrice = newPrice;
+        if (newPrice > 0) {
+            this.basePrice = newPrice;
+        }
     }
 
     public static class Builder {
@@ -61,35 +63,49 @@ public class CustomLaptop implements Product {
         public Builder(String id, String name, double basePrice) {
             this.id = id;
             this.name = name;
-            this.basePrice = basePrice;
+            this.basePrice = Math.max(0, basePrice);
         }
 
         public Builder cpu(String cpu, double extraCost) {
             this.cpu = cpu;
-            this.basePrice += extraCost;
+            if (extraCost > 0) {
+                this.basePrice += extraCost;
+            }
             return this;
         }
 
         public Builder ramGb(int ramGb, double extraCost) {
-            this.ramGb = ramGb;
-            this.basePrice += extraCost;
+            if (ramGb > 0) {
+                this.ramGb = ramGb;
+            }
+            if (extraCost > 0) {
+                this.basePrice += extraCost;
+            }
             return this;
         }
 
         public Builder storageGb(int storageGb, double extraCost) {
-            this.storageGb = storageGb;
-            this.basePrice += extraCost;
+            if (storageGb > 0) {
+                this.storageGb = storageGb;
+            }
+            if (extraCost > 0) {
+                this.basePrice += extraCost;
+            }
             return this;
         }
 
         public Builder gpu(String gpu, double extraCost) {
             this.gpu = gpu;
-            this.basePrice += extraCost;
+            if (extraCost > 0) {
+                this.basePrice += extraCost;
+            }
             return this;
         }
 
         public Builder color(String color) {
-            this.color = color;
+            if (color != null && !color.isBlank()) {
+                this.color = color;
+            }
             return this;
         }
 

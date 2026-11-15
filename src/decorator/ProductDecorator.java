@@ -9,6 +9,10 @@ public abstract class ProductDecorator implements Product {
         this.wrappedProduct = wrappedProduct;
     }
 
+    public Product getWrappedProduct() {
+        return wrappedProduct;
+    }
+
     @Override
     public String getId() {
         return wrappedProduct.getId();

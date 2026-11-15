@@ -13,7 +13,7 @@ public class StoreCatalog implements CatalogSubject {
 
     @Override
     public void subscribe(CatalogObserver observer) {
-        if (!observers.contains(observer)) {
+        if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
     }
@@ -38,6 +38,9 @@ public class StoreCatalog implements CatalogSubject {
     }
 
     public void registerProduct(Product product, int initialStock) {
+        if (product == null || initialStock < 0) {
+            return;
+        }
         products.put(product.getId(), product);
         stock.put(product.getId(), initialStock);
     }
@@ -56,22 +59,37 @@ public class StoreCatalog implements CatalogSubject {
 
     public void updatePrice(String productId, double newPrice) {
         Product product = products.get(productId);
-        if (product != null) {
-            double oldPrice = product.getPrice();
-            product.updateBasePrice(newPrice);
-            notifyPriceChanged(productId, product.getName(), oldPrice, newPrice);
+        if (product == null) {
+            System.out.println("Product not found: " + productId);
+            return;
         }
+        if (newPrice <= 0) {
+            System.out.println("Invalid price: must be greater than 0.");
+            return;
+        }
+        double oldPrice = product.getPrice();
+        product.updateBasePrice(newPrice);
+        notifyPriceChanged(productId, product.getName(), oldPrice, newPrice);
     }
 
     public void updateStock(String productId, int newStock) {
         Product product = products.get(productId);
-        if (product != null) {
-            stock.put(productId, newStock);
-            notifyStockChanged(productId, product.getName(), newStock);
+        if (product == null) {
+            System.out.println("Product not found: " + productId);
+            return;
         }
+        if (newStock < 0) {
+            System.out.println("Invalid stock: cannot be negative.");
+            return;
+        }
+        stock.put(productId, newStock);
+        notifyStockChanged(productId, product.getName(), newStock);
     }
 
     public void decreaseStock(String productId, int quantity) {
+        if (quantity <= 0) {
+            return;
+        }
         int current = getStock(productId);
         int updated = Math.max(0, current - quantity);
         updateStock(productId, updated);

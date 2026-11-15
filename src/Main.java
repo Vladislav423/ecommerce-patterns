@@ -24,6 +24,9 @@ public class Main {
             System.out.println("0. Exit");
             System.out.print("Select option: ");
 
+            if (!scanner.hasNextLine()) {
+                return;
+            }
             String choice = scanner.nextLine().trim();
 
             switch (choice) {
@@ -34,13 +37,18 @@ public class Main {
                     shop.showCatalog();
                     System.out.print("Enter product ID (e.g. E1, A1): ");
                     String prodId = scanner.nextLine().trim();
-                    System.out.print("Enter quantity: ");
-                    int qty = Integer.parseInt(scanner.nextLine().trim());
-                    shop.addCatalogItemToCart(prodId, qty);
+                    Integer qty = readInt(scanner, "Enter quantity: ");
+                    if (qty != null) {
+                        shop.addCatalogItemToCart(prodId, qty);
+                    }
                     break;
                 case "3":
                     System.out.print("Enter custom laptop ID (e.g. L1): ");
                     String lapId = scanner.nextLine().trim();
+                    if (!shop.canCreateCustomLaptop(lapId)) {
+                        break;
+                    }
+
                     System.out.print("CPU (1 - Intel i5 +$0, 2 - Intel i7 +$200, 3 - M3 Max +$400): ");
                     String cpuOpt = scanner.nextLine().trim();
                     String cpu = "Intel i5";
@@ -53,13 +61,15 @@ public class Main {
                         cpuCost = 400;
                     }
 
-                    System.out.print("RAM (16 or 32 GB): ");
-                    int ram = Integer.parseInt(scanner.nextLine().trim());
-                    double ramCost = (ram == 32) ? 150 : 0;
+                    System.out.print("RAM (1 - 16GB +$0, 2 - 32GB +$150): ");
+                    String ramOpt = scanner.nextLine().trim();
+                    int ram = ramOpt.equals("2") ? 32 : 16;
+                    double ramCost = ramOpt.equals("2") ? 150 : 0;
 
-                    System.out.print("SSD (512 or 1024 GB): ");
-                    int ssd = Integer.parseInt(scanner.nextLine().trim());
-                    double ssdCost = (ssd == 1024) ? 120 : 0;
+                    System.out.print("SSD (1 - 512GB +$0, 2 - 1024GB +$120): ");
+                    String ssdOpt = scanner.nextLine().trim();
+                    int ssd = ssdOpt.equals("2") ? 1024 : 512;
+                    double ssdCost = ssdOpt.equals("2") ? 120 : 0;
 
                     System.out.print("GPU (1 - Integrated +$0, 2 - RTX 4060 +$300): ");
                     String gpuOpt = scanner.nextLine().trim();
@@ -73,6 +83,9 @@ public class Main {
                     break;
                 case "4":
                     shop.showCart();
+                    if (shop.isCartEmpty()) {
+                        break;
+                    }
                     System.out.print("Enter product ID in cart to decorate: ");
                     String targetId = scanner.nextLine().trim();
                     System.out.print("Addon type (GIFT / WARRANTY / INSURANCE): ");
@@ -89,8 +102,10 @@ public class Main {
                         shop.setDiscountStrategy(new PercentageDiscountStrategy(15));
                     } else if (disc.equals("3")) {
                         shop.setDiscountStrategy(new ThresholdDiscountStrategy(1000, 100));
-                    } else {
+                    } else if (disc.equals("1")) {
                         shop.setDiscountStrategy(new NoDiscountStrategy());
+                    } else {
+                        System.out.println("Invalid discount option.");
                     }
                     break;
                 case "6":
@@ -98,16 +113,22 @@ public class Main {
                     System.out.println("2. Change product stock");
                     System.out.print("Choose action: ");
                     String obsAct = scanner.nextLine().trim();
+                    if (!obsAct.equals("1") && !obsAct.equals("2")) {
+                        System.out.println("Invalid action.");
+                        break;
+                    }
                     System.out.print("Enter product ID: ");
                     String obsId = scanner.nextLine().trim();
                     if (obsAct.equals("1")) {
-                        System.out.print("Enter new price: ");
-                        double newPrice = Double.parseDouble(scanner.nextLine().trim());
-                        shop.updateCatalogPrice(obsId, newPrice);
-                    } else if (obsAct.equals("2")) {
-                        System.out.print("Enter new stock: ");
-                        int newStock = Integer.parseInt(scanner.nextLine().trim());
-                        shop.updateCatalogStock(obsId, newStock);
+                        Double newPrice = readDouble(scanner, "Enter new price: ");
+                        if (newPrice != null) {
+                            shop.updateCatalogPrice(obsId, newPrice);
+                        }
+                    } else {
+                        Integer newStock = readInt(scanner, "Enter new stock: ");
+                        if (newStock != null) {
+                            shop.updateCatalogStock(obsId, newStock);
+                        }
                     }
                     break;
                 case "7":
@@ -128,7 +149,36 @@ public class Main {
         }
     }
 
+    private static Integer readInt(Scanner scanner, String prompt) {
+        System.out.print(prompt);
+        if (!scanner.hasNextLine()) {
+            return null;
+        }
+        String input = scanner.nextLine().trim();
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number: " + input);
+            return null;
+        }
+    }
+
+    private static Double readDouble(Scanner scanner, String prompt) {
+        System.out.print(prompt);
+        if (!scanner.hasNextLine()) {
+            return null;
+        }
+        String input = scanner.nextLine().trim();
+        try {
+            return Double.parseDouble(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid price: " + input);
+            return null;
+        }
+    }
+
     private static void runDemo(ECommerceFacade shop) {
+        shop.resetForDemo();
         System.out.println("\n=== DEMO: ALL 6 DESIGN PATTERNS ===");
 
         System.out.println("\n1) Factory Method: adding catalog items to cart");

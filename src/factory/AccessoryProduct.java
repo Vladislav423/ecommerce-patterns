@@ -11,7 +11,7 @@ public class AccessoryProduct implements Product {
     public AccessoryProduct(String id, String name, double basePrice, String type) {
         this.id = id;
         this.name = name;
-        this.basePrice = basePrice;
+        this.basePrice = Math.max(0, basePrice);
         this.type = type;
     }
 
@@ -37,6 +37,8 @@ public class AccessoryProduct implements Product {
 
     @Override
     public void updateBasePrice(double newPrice) {
-        this.basePrice = newPrice;
+        if (newPrice > 0) {
+            this.basePrice = newPrice;
+        }
     }
 }

@@ -6,7 +6,7 @@ public class CartItem {
 
     public CartItem(Product product, int quantity) {
         this.product = product;
-        this.quantity = quantity;
+        this.quantity = Math.max(1, quantity);
     }
 
     public Product getProduct() {
@@ -14,7 +14,9 @@ public class CartItem {
     }
 
     public void setProduct(Product product) {
-        this.product = product;
+        if (product != null) {
+            this.product = product;
+        }
     }
 
     public int getQuantity() {
@@ -22,7 +24,9 @@ public class CartItem {
     }
 
     public void setQuantity(int quantity) {
-        this.quantity = quantity;
+        if (quantity > 0) {
+            this.quantity = quantity;
+        }
     }
 
     public double getTotalPrice() {

@@ -9,6 +9,9 @@ public class ShoppingCart implements CatalogObserver {
     private List<CartItem> items = new ArrayList<>();
 
     public void addItem(Product product, int quantity) {
+        if (product == null || quantity <= 0) {
+            return;
+        }
         for (CartItem item : items) {
             if (item.getProduct().getId().equals(product.getId())) {
                 item.setQuantity(item.getQuantity() + quantity);
@@ -62,7 +65,8 @@ public class ShoppingCart implements CatalogObserver {
         CartItem item = findItem(productId);
         if (item != null) {
             item.getProduct().updateBasePrice(newPrice);
-            System.out.println("[Cart Observer] Price updated in cart for " + productName + ": $" + oldPrice + " -> $" + newPrice + " | New cart subtotal: $" + getSubtotal());
+            System.out.println("[Cart Observer] Base price updated for " + productName + ": $" + oldPrice + " -> $" + newPrice
+                    + " (Cart unit price: $" + item.getProduct().getPrice() + " | Subtotal: $" + getSubtotal() + ")");
         }
     }
 
@@ -70,11 +74,12 @@ public class ShoppingCart implements CatalogObserver {
     public void onStockChanged(String productId, String productName, int newStock) {
         CartItem item = findItem(productId);
         if (item != null) {
-            if (newStock == 0) {
-                System.out.println("[Cart Observer] Warning: " + productName + " is now OUT OF STOCK!");
+            if (newStock <= 0) {
+                removeItem(productId);
+                System.out.println("[Cart Observer] " + productName + " is now OUT OF STOCK and was removed from cart.");
             } else if (item.getQuantity() > newStock) {
                 item.setQuantity(newStock);
-                System.out.println("[Cart Observer] Quantity for " + productName + " adjusted to available stock: " + newStock);
+                System.out.println("[Cart Observer] Quantity for " + productName + " reduced to available stock: " + newStock);
             }
         }
     }
