@@ -37,6 +37,11 @@ public class StoreCatalog implements CatalogSubject {
         }
     }
 
+    public void clear() {
+        products.clear();
+        stock.clear();
+    }
+
     public void registerProduct(Product product, int initialStock) {
         if (product == null || initialStock < 0) {
             return;
@@ -46,11 +51,17 @@ public class StoreCatalog implements CatalogSubject {
     }
 
     public Product getProduct(String productId) {
-        return products.get(productId);
+        if (productId == null) {
+            return null;
+        }
+        return products.get(productId.trim().toUpperCase());
     }
 
     public int getStock(String productId) {
-        return stock.getOrDefault(productId, 0);
+        if (productId == null) {
+            return 0;
+        }
+        return stock.getOrDefault(productId.trim().toUpperCase(), 0);
     }
 
     public Map<String, Product> getAllProducts() {
@@ -58,22 +69,27 @@ public class StoreCatalog implements CatalogSubject {
     }
 
     public void updatePrice(String productId, double newPrice) {
-        Product product = products.get(productId);
+        Product product = getProduct(productId);
         if (product == null) {
             System.out.println("Product not found: " + productId);
             return;
         }
-        if (newPrice <= 0) {
+        if (!Double.isFinite(newPrice) || newPrice <= 0) {
             System.out.println("Invalid price: must be greater than 0.");
             return;
         }
+        newPrice = Math.round(newPrice * 100.0) / 100.0;
         double oldPrice = product.getPrice();
+        if (Double.compare(oldPrice, newPrice) == 0) {
+            System.out.println("Price for " + product.getName() + " is already $" + newPrice);
+            return;
+        }
         product.updateBasePrice(newPrice);
-        notifyPriceChanged(productId, product.getName(), oldPrice, newPrice);
+        notifyPriceChanged(product.getId(), product.getName(), oldPrice, newPrice);
     }
 
     public void updateStock(String productId, int newStock) {
-        Product product = products.get(productId);
+        Product product = getProduct(productId);
         if (product == null) {
             System.out.println("Product not found: " + productId);
             return;
@@ -82,8 +98,13 @@ public class StoreCatalog implements CatalogSubject {
             System.out.println("Invalid stock: cannot be negative.");
             return;
         }
-        stock.put(productId, newStock);
-        notifyStockChanged(productId, product.getName(), newStock);
+        int oldStock = getStock(product.getId());
+        if (oldStock == newStock) {
+            System.out.println("Stock for " + product.getName() + " is already " + newStock);
+            return;
+        }
+        stock.put(product.getId(), newStock);
+        notifyStockChanged(product.getId(), product.getName(), newStock);
     }
 
     public void decreaseStock(String productId, int quantity) {

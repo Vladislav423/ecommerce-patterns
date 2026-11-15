@@ -37,49 +37,16 @@ public class Main {
                     shop.showCatalog();
                     System.out.print("Enter product ID (e.g. E1, A1): ");
                     String prodId = scanner.nextLine().trim();
+                    if (!shop.canOrderCatalogProduct(prodId)) {
+                        break;
+                    }
                     Integer qty = readInt(scanner, "Enter quantity: ");
                     if (qty != null) {
                         shop.addCatalogItemToCart(prodId, qty);
                     }
                     break;
                 case "3":
-                    System.out.print("Enter custom laptop ID (e.g. L1): ");
-                    String lapId = scanner.nextLine().trim();
-                    if (!shop.canCreateCustomLaptop(lapId)) {
-                        break;
-                    }
-
-                    System.out.print("CPU (1 - Intel i5 +$0, 2 - Intel i7 +$200, 3 - M3 Max +$400): ");
-                    String cpuOpt = scanner.nextLine().trim();
-                    String cpu = "Intel i5";
-                    double cpuCost = 0;
-                    if (cpuOpt.equals("2")) {
-                        cpu = "Intel i7";
-                        cpuCost = 200;
-                    } else if (cpuOpt.equals("3")) {
-                        cpu = "M3 Max";
-                        cpuCost = 400;
-                    }
-
-                    System.out.print("RAM (1 - 16GB +$0, 2 - 32GB +$150): ");
-                    String ramOpt = scanner.nextLine().trim();
-                    int ram = ramOpt.equals("2") ? 32 : 16;
-                    double ramCost = ramOpt.equals("2") ? 150 : 0;
-
-                    System.out.print("SSD (1 - 512GB +$0, 2 - 1024GB +$120): ");
-                    String ssdOpt = scanner.nextLine().trim();
-                    int ssd = ssdOpt.equals("2") ? 1024 : 512;
-                    double ssdCost = ssdOpt.equals("2") ? 120 : 0;
-
-                    System.out.print("GPU (1 - Integrated +$0, 2 - RTX 4060 +$300): ");
-                    String gpuOpt = scanner.nextLine().trim();
-                    String gpu = gpuOpt.equals("2") ? "RTX 4060" : "Integrated";
-                    double gpuCost = gpuOpt.equals("2") ? 300 : 0;
-
-                    System.out.print("Color: ");
-                    String color = scanner.nextLine().trim();
-
-                    shop.addCustomLaptopToCart(lapId, cpu, cpuCost, ram, ramCost, ssd, ssdCost, gpu, gpuCost, color);
+                    buildCustomLaptopMenu(scanner, shop);
                     break;
                 case "4":
                     shop.showCart();
@@ -88,7 +55,10 @@ public class Main {
                     }
                     System.out.print("Enter product ID in cart to decorate: ");
                     String targetId = scanner.nextLine().trim();
-                    System.out.print("Addon type (GIFT / WARRANTY / INSURANCE): ");
+                    if (!shop.isItemInCart(targetId)) {
+                        break;
+                    }
+                    System.out.print("Choose addon (1 - Gift Wrap +$5, 2 - Extended Warranty +$45, 3 - Shipping Insurance +$15): ");
                     String addon = scanner.nextLine().trim();
                     shop.applyAddonToItem(targetId, addon);
                     break;
@@ -117,8 +87,12 @@ public class Main {
                         System.out.println("Invalid action.");
                         break;
                     }
+                    shop.showCatalog();
                     System.out.print("Enter product ID: ");
                     String obsId = scanner.nextLine().trim();
+                    if (!shop.hasCatalogProduct(obsId)) {
+                        break;
+                    }
                     if (obsAct.equals("1")) {
                         Double newPrice = readDouble(scanner, "Enter new price: ");
                         if (newPrice != null) {
@@ -149,6 +123,87 @@ public class Main {
         }
     }
 
+    private static void buildCustomLaptopMenu(Scanner scanner, ECommerceFacade shop) {
+        System.out.print("CPU (1 - Intel i5 +$0, 2 - Intel i7 +$200, 3 - M3 Max +$400): ");
+        String cpuOpt = scanner.nextLine().trim();
+        String cpu;
+        double cpuCost;
+        if (cpuOpt.equals("1")) {
+            cpu = "Intel i5";
+            cpuCost = 0;
+        } else if (cpuOpt.equals("2")) {
+            cpu = "Intel i7";
+            cpuCost = 200;
+        } else if (cpuOpt.equals("3")) {
+            cpu = "M3 Max";
+            cpuCost = 400;
+        } else {
+            System.out.println("Invalid CPU option.");
+            return;
+        }
+
+        System.out.print("RAM (1 - 16GB +$0, 2 - 32GB +$150): ");
+        String ramOpt = scanner.nextLine().trim();
+        int ram;
+        double ramCost;
+        if (ramOpt.equals("1")) {
+            ram = 16;
+            ramCost = 0;
+        } else if (ramOpt.equals("2")) {
+            ram = 32;
+            ramCost = 150;
+        } else {
+            System.out.println("Invalid RAM option.");
+            return;
+        }
+
+        System.out.print("SSD (1 - 512GB +$0, 2 - 1024GB +$120): ");
+        String ssdOpt = scanner.nextLine().trim();
+        int ssd;
+        double ssdCost;
+        if (ssdOpt.equals("1")) {
+            ssd = 512;
+            ssdCost = 0;
+        } else if (ssdOpt.equals("2")) {
+            ssd = 1024;
+            ssdCost = 120;
+        } else {
+            System.out.println("Invalid SSD option.");
+            return;
+        }
+
+        System.out.print("GPU (1 - Integrated +$0, 2 - RTX 4060 +$300): ");
+        String gpuOpt = scanner.nextLine().trim();
+        String gpu;
+        double gpuCost;
+        if (gpuOpt.equals("1")) {
+            gpu = "Integrated";
+            gpuCost = 0;
+        } else if (gpuOpt.equals("2")) {
+            gpu = "RTX 4060";
+            gpuCost = 300;
+        } else {
+            System.out.println("Invalid GPU option.");
+            return;
+        }
+
+        System.out.print("Color (1 - Silver, 2 - Space Black, 3 - Midnight Blue): ");
+        String colorOpt = scanner.nextLine().trim();
+        String color;
+        if (colorOpt.equals("1")) {
+            color = "Silver";
+        } else if (colorOpt.equals("2")) {
+            color = "Space Black";
+        } else if (colorOpt.equals("3")) {
+            color = "Midnight Blue";
+        } else {
+            System.out.println("Invalid color option.");
+            return;
+        }
+
+        shop.addCustomLaptopToCart(null, cpu, cpuCost, ram, ramCost, ssd, ssdCost, gpu, gpuCost, color);
+    }
+
     private static Integer readInt(Scanner scanner, String prompt) {
         System.out.print(prompt);
         if (!scanner.hasNextLine()) {
@@ -170,7 +225,12 @@ public class Main {
         }
         String input = scanner.nextLine().trim();
         try {
-            return Double.parseDouble(input);
+            double val = Double.parseDouble(input);
+            if (!Double.isFinite(val)) {
+                System.out.println("Invalid price: " + input);
+                return null;
+            }
+            return val;
         } catch (NumberFormatException e) {
             System.out.println("Invalid price: " + input);
             return null;

@@ -21,7 +21,7 @@ public class PercentageDiscountStrategy implements DiscountStrategy {
         if (subtotal <= 0) {
             return 0.0;
         }
-        return subtotal * (percent / 100.0);
+        return Math.round(subtotal * (percent / 100.0) * 100.0) / 100.0;
     }
 
     @Override

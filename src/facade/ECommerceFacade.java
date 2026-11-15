@@ -26,6 +26,7 @@ public class ECommerceFacade {
     private DiscountStrategy discountStrategy;
     private ProductFactory electronicsFactory;
     private ProductFactory accessoryFactory;
+    private int customLaptopCounter = 1;
 
     public ECommerceFacade(String customerName) {
         this.catalog = new StoreCatalog();
@@ -42,6 +43,9 @@ public class ECommerceFacade {
     }
 
     public void initDefaultCatalog() {
+        catalog.clear();
+        customLaptopCounter = 1;
+
         Product phone = electronicsFactory.createProduct("E1", "iPhone 16", 900.0, "Apple");
         Product monitor = electronicsFactory.createProduct("E2", "Odyssey Monitor", 350.0, "Samsung");
         Product mouse = accessoryFactory.createProduct("A1", "MX Master Mouse", 100.0, "Wireless");
@@ -63,6 +67,54 @@ public class ECommerceFacade {
         return cart.getItems().isEmpty();
     }
 
+    public boolean hasCatalogProduct(String productId) {
+        if (productId == null || productId.isBlank()) {
+            System.out.println("Product ID cannot be empty.");
+            return false;
+        }
+        if (catalog.getProduct(productId) == null) {
+            System.out.println("Product not found: " + productId.trim().toUpperCase());
+            return false;
+        }
+        return true;
+    }
+
+    public boolean canOrderCatalogProduct(String productId) {
+        if (!hasCatalogProduct(productId)) {
+            return false;
+        }
+        String normalized = productId.trim().toUpperCase();
+        Product product = catalog.getProduct(normalized);
+        int available = catalog.getStock(normalized);
+        CartItem existing = cart.findItem(normalized);
+        int alreadyInCart = (existing != null) ? existing.getQuantity() : 0;
+        if (available <= 0 || alreadyInCart >= available) {
+            System.out.println("No more stock available for " + product.getName() + " (Stock: " + available + ", in cart: " + alreadyInCart + ").");
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isItemInCart(String productId) {
+        if (productId == null || productId.isBlank()) {
+            System.out.println("Product ID cannot be empty.");
+            return false;
+        }
+        String normalized = productId.trim().toUpperCase();
+        if (cart.findItem(normalized) == null) {
+            System.out.println("Item " + normalized + " is not in the cart.");
+            return false;
+        }
+        return true;
+    }
+
+    public String generateNextLaptopId() {
+        while (catalog.getProduct("L" + customLaptopCounter) != null) {
+            customLaptopCounter++;
+        }
+        return "L" + (customLaptopCounter++);
+    }
+
     public void showCatalog() {
         System.out.println("\n--- Store Catalog ---");
         for (Product p : catalog.getAllProducts().values()) {
@@ -71,8 +123,7 @@ public class ECommerceFacade {
     }
 
     public void addCatalogItemToCart(String productId, int quantity) {
-        if (productId == null || productId.isBlank()) {
-            System.out.println("Product ID cannot be empty.");
+        if (!hasCatalogProduct(productId)) {
             return;
         }
         productId = productId.trim().toUpperCase();
@@ -81,10 +132,6 @@ public class ECommerceFacade {
             return;
         }
         Product product = catalog.getProduct(productId);
-        if (product == null) {
-            System.out.println("Product not found: " + productId);
-            return;
-        }
         int available = catalog.getStock(productId);
         CartItem existing = cart.findItem(productId);
         int alreadyInCart = (existing != null) ? existing.getQuantity() : 0;
@@ -97,32 +144,8 @@ public class ECommerceFacade {
         System.out.println("Added to cart: " + product.getName() + " x" + quantity);
     }
 
-    public boolean canCreateCustomLaptop(String id) {
-        if (id == null || id.isBlank()) {
-            System.out.println("Product ID cannot be empty.");
-            return false;
-        }
-        String normalizedId = id.trim().toUpperCase();
-        Product existingProduct = catalog.getProduct(normalizedId);
-        if (existingProduct != null && !(existingProduct instanceof CustomLaptop)) {
-            System.out.println("Product ID " + normalizedId + " belongs to a standard catalog item. Choose another ID.");
-            return false;
-        }
-        if (cart.findItem(normalizedId) != null) {
-            System.out.println("Custom laptop with ID " + normalizedId + " is already in the cart.");
-            return false;
-        }
-        return true;
-    }
-
     public void addCustomLaptopToCart(String id, String cpu, double cpuCost, int ram, double ramCost, int ssd, double ssdCost, String gpu, double gpuCost, String color) {
-        if (!canCreateCustomLaptop(id)) {
-            return;
-        }
-        String normalizedId = id.trim().toUpperCase();
-        if (color == null || color.isBlank()) {
-            color = "Silver";
-        }
+        String normalizedId = (id == null || id.isBlank()) ? generateNextLaptopId() : id.trim().toUpperCase();
 
         CustomLaptop laptop = new CustomLaptop.Builder(normalizedId, "Custom Laptop", 800.0)
                 .cpu(cpu, cpuCost)
@@ -132,26 +155,23 @@ public class ECommerceFacade {
                 .color(color)
                 .build();
 
-        catalog.registerProduct(laptop, 3);
+        catalog.registerProduct(laptop, 1);
         cart.addItem(laptop, 1);
-        System.out.println("Built and added custom laptop: " + laptop.getDescription() + " ($" + laptop.getPrice() + ")");
+        System.out.println("Built and added custom laptop [" + normalizedId + "]: " + laptop.getDescription() + " ($" + laptop.getPrice() + ")");
     }
 
     public void applyAddonToItem(String productId, String addonType) {
-        if (productId == null || productId.isBlank()) {
-            System.out.println("Product ID cannot be empty.");
+        if (!isItemInCart(productId)) {
             return;
         }
         productId = productId.trim().toUpperCase();
         CartItem item = cart.findItem(productId);
-        if (item == null) {
-            System.out.println("Item " + productId + " is not in the cart.");
-            return;
-        }
 
         Product current = item.getProduct();
         Product decorated;
-        switch (addonType.trim().toUpperCase()) {
+        String type = (addonType == null) ? "" : addonType.trim().toUpperCase();
+        switch (type) {
+            case "1":
             case "GIFT":
                 if (hasDecorator(current, GiftWrapDecorator.class)) {
                     System.out.println("Item " + productId + " already has Gift Wrap.");
@@ -159,6 +179,7 @@ public class ECommerceFacade {
                 }
                 decorated = new GiftWrapDecorator(current);
                 break;
+            case "2":
             case "WARRANTY":
                 if (hasDecorator(current, WarrantyDecorator.class)) {
                     System.out.println("Item " + productId + " already has Extended Warranty.");
@@ -166,6 +187,7 @@ public class ECommerceFacade {
                 }
                 decorated = new WarrantyDecorator(current);
                 break;
+            case "3":
             case "INSURANCE":
                 if (hasDecorator(current, InsuranceDecorator.class)) {
                     System.out.println("Item " + productId + " already has Shipping Insurance.");
@@ -174,7 +196,7 @@ public class ECommerceFacade {
                 decorated = new InsuranceDecorator(current);
                 break;
             default:
-                System.out.println("Unknown addon type: " + addonType);
+                System.out.println("Invalid addon option: " + addonType);
                 return;
         }
 
@@ -202,16 +224,14 @@ public class ECommerceFacade {
     }
 
     public void updateCatalogPrice(String productId, double newPrice) {
-        if (productId == null || productId.isBlank()) {
-            System.out.println("Product ID cannot be empty.");
+        if (!hasCatalogProduct(productId)) {
             return;
         }
         catalog.updatePrice(productId.trim().toUpperCase(), newPrice);
     }
 
     public void updateCatalogStock(String productId, int newStock) {
-        if (productId == null || productId.isBlank()) {
-            System.out.println("Product ID cannot be empty.");
+        if (!hasCatalogProduct(productId)) {
             return;
         }
         catalog.updateStock(productId.trim().toUpperCase(), newStock);
@@ -226,9 +246,9 @@ public class ECommerceFacade {
         for (CartItem item : cart.getItems()) {
             System.out.println(item);
         }
-        double subtotal = cart.getSubtotal();
-        double discount = discountStrategy.calculateDiscount(subtotal, cart.getItems());
-        double finalTotal = Math.max(0, subtotal - discount);
+        double subtotal = Math.round(cart.getSubtotal() * 100.0) / 100.0;
+        double discount = Math.round(discountStrategy.calculateDiscount(subtotal, cart.getItems()) * 100.0) / 100.0;
+        double finalTotal = Math.round(Math.max(0, subtotal - discount) * 100.0) / 100.0;
         System.out.println("Subtotal: $" + subtotal);
         System.out.println("Discount (" + discountStrategy.getStrategyName() + "): -$" + discount);
         System.out.println("Total: $" + finalTotal);
